@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\RecipeRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -26,6 +28,16 @@ class Recipe
      * @ORM\Column(type="text", nullable=true)
      */
     private $SubTitle;
+
+    /**
+     * @ORM\ManyToMany(targetEntity=RecipeTotal::class, mappedBy="Recipe")
+     */
+    private $recipeTotals;
+
+    public function __construct()
+    {
+        $this->recipeTotals = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -52,6 +64,34 @@ class Recipe
     public function setSubTitle(?string $SubTitle): self
     {
         $this->SubTitle = $SubTitle;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|RecipeTotal[]
+     */
+    public function getRecipeTotals(): Collection
+    {
+        return $this->recipeTotals;
+    }
+
+    public function addRecipeTotal(RecipeTotal $recipeTotal): self
+    {
+        if (!$this->recipeTotals->contains($recipeTotal)) {
+            $this->recipeTotals[] = $recipeTotal;
+            $recipeTotal->addRecipe($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRecipeTotal(RecipeTotal $recipeTotal): self
+    {
+        if ($this->recipeTotals->contains($recipeTotal)) {
+            $this->recipeTotals->removeElement($recipeTotal);
+            $recipeTotal->removeRecipe($this);
+        }
 
         return $this;
     }

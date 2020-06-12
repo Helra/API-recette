@@ -1,3 +1,23 @@
 #index:
 #    path: /
 #    controller: App\Controller\DefaultController::index
+
+api_recipes_show:
+  path:       /api/recipes/{id}
+  controller: App\Controller\BlogApiController::RecipeShow
+  methods:    GET|HEAD
+
+api_recipes_edit:
+  path:       /api/recipes/{id}
+  controller: App\Controller\BlogApiController::RecipeEdit
+  methods:    PUT
+
+api_recipes_create:
+  path:       /api/recipes/{id}
+  controller: App\Controller\BlogApiController::RecipeCreate
+  methods:    POST
+
+api_recipes_delete:
+  path:       /api/recipes/{id}
+  controller: App\Controller\BlogApiController::RecipeCreate
+  methods:    DELETE
