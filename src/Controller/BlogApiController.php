@@ -5,9 +5,7 @@ namespace App\Controller;
 
 use App\Entity\Ingredient;
 use App\Entity\Recipe;
-use App\Entity\RecipeTotal;
 use App\Form\IngredientType;
-use App\Form\RecipeTotalType;
 use App\Form\RecipeType;
 use App\Repository\IngredientRepository;
 use App\Repository\RecipeRepository;
@@ -16,7 +14,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use App\Repository\RecipeTotalRepository;
 use Symfony\Component\Routing\Annotation\Route;
 
 
@@ -25,17 +22,6 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class BlogApiController extends AbstractController
 {
-    /**
-     * Edit Recipe
-     * @Route("/recipestotal/{id}", name="RecipeTotalEdit", methods={"POST"})
-     * @param int $id
-     * @param RecipeTotalRepository $recipeTotalRepository
-     */
-    public function RecipeEdit(int $id, RecipeTotalRepository $recipeTotalRepository, Ingredient $ingredient, Recipe $recipe)
-    {
-        $recipeOnly = $recipeTotalRepository->find($id);
-        $responseIngredient = $recipeOnly->addIngredient($ingredient);
-    }
 
     /**
      * Add Ingredient
@@ -47,9 +33,9 @@ class BlogApiController extends AbstractController
     {
         $ingredient = new Ingredient();
         $datas = json_decode($request->getContent(), true);
-        foreach ($datas as $key => $data) {
-            $datas[$key] = $this->remove_accents($data);
-        }
+//        foreach ($datas as $key => $data) {
+//            $datas[$key] = $this->remove_accents($data);
+//        }
         $form = $this->createForm(IngredientType::class, $ingredient);
         $form->submit($datas);
 
@@ -69,19 +55,42 @@ class BlogApiController extends AbstractController
      * Add Recipe
      * @Route("/recipes/add", name="RecipeAdd", methods={"PUT"})
      * @param Request $request
+     * @param IngredientRepository $ingredientRepository
      * @return JsonResponse
      */
-    public function RecipeAdd(Request $request)
+    public function RecipeAdd(Request $request, IngredientRepository $ingredientRepository)
     {
         $recipe = new Recipe();
         $datas = json_decode($request->getContent(), true);
-        foreach ($datas as $key => $data) {
-            $datas[$key] = $this->remove_accents($data);
-        }
         $form = $this->createForm(RecipeType::class, $recipe);
         $form->submit($datas);
 
+
+        if ($form->isValid()) {
+            var_dump('Valid');
+        } else {
+            var_dump('Not Valid');
+        }
+
         if ($form->isSubmitted()) {
+            foreach ($datas as $typeEntity => $data) {
+                if ($typeEntity === 'Ingredient') {
+                    $ingredientTabs = $datas[$typeEntity];
+                    foreach ($ingredientTabs as $ingredients) {
+                        foreach ($ingredients as $keyIngredient => $ingredient) {
+
+                            if ($keyIngredient === 'id') {
+                                $ingredientRecipeTotal[] = $ingredientRepository->find($ingredient);
+                                var_dump($ingredientRecipeTotal);
+                            } elseif ($keyIngredient === 'name') {
+                                if ($ingredientRepository->findOneByName($ingredient)) {
+                                    $ingredientRecipeTotal[] = $ingredientRepository->findOneByName($ingredient);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             $em = $this->getDoctrine()->getManager();
             $em->persist($recipe);
             $em->flush();
@@ -94,119 +103,117 @@ class BlogApiController extends AbstractController
         if ($recipe->getSubTitle()) {
             $subTitle = $recipe->getSubTitle();
         }
-
-        return $this->json(['id' => $id, 'Title' => $title, 'SubTitle' => $subTitle]);
-    }
-
-    /**
-     * Add Recipe Total
-     * @Route("/recipetotal/add", name="RecipeTotalAdd", methods={"PUT"})
-     * @param Request $request
-     * @return JsonResponse|RedirectResponse
-     */
-    public function RecipeTotalAdd(Request $request, IngredientRepository $ingredientRepository)
-    {
-        $recipeTotal = new RecipeTotal();
-
-        $datas = json_decode($request->getContent(), true);
-
-        $errors = [];
-        $ingredientRecipeTotal = [];
-
-
-        foreach ($datas as $typeEntity => $data) {
-            if ($typeEntity === 'Ingredient') {
-                $ingredientTabs = $datas[$typeEntity];
-                foreach ($ingredientTabs as $ingredients) {
-                    foreach ($ingredients as $keyIngredient => $ingredient) {
-                        var_dump($keyIngredient);
-                        if ($keyIngredient === 'id') {
-                            $ingredientRecipeTotal[] = $ingredientRepository->find($ingredient);
-                            var_dump($ingredientRecipeTotal);
-                        } elseif ($keyIngredient === 'name') {
-                            if ($ingredientRepository->findOneByName($ingredient)) {
-                                $ingredientRecipeTotal[] = $ingredientRepository->findOneByName($ingredient);
-                                var_dump($ingredientRecipeTotal);
-                                die;
-                            } else {
-                                $curl = curl_init();
-
-                                curl_setopt_array($curl, array(
-                                    CURLOPT_URL => "http://127.0.0.1:8000/api/ingredients/add",
-                                    CURLOPT_RETURNTRANSFER => true,
-                                    CURLOPT_ENCODING => "",
-                                    CURLOPT_MAXREDIRS => 10,
-                                    CURLOPT_TIMEOUT => 0,
-                                    CURLOPT_FOLLOWLOCATION => true,
-                                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                                    CURLOPT_CUSTOMREQUEST => "PUT",
-                                    CURLOPT_POSTFIELDS => json_encode($ingredients[$keyIngredient], true),
-                                    CURLOPT_HTTPHEADER => array(
-                                        "Content-Type: application/json"
-                                    ),
-                                ));
-
-                                $response = curl_exec($curl);
-
-                                curl_close($curl);
-                                $ingredientRecipeTotals[] = $response;
-
-                            }
-                        } else {
-                            $errors[] = "Mauvais format d'ingrédient";
-                        }
-                    }
-                }
-                var_dump($ingredientRecipeTotals);
-
-            } elseif
-            ($typeEntity === 'Recipe') {
-                $recipes = $datas[$typeEntity];
-            }
-        }
-
-
-        $form = $this->createForm(RecipeTotalType::class, $recipeTotal);
-        $form->submit($data);
-
-        if ($form->isSubmitted()) {
-            echo 'Submit';
-        }
-
-        if ($form->isValid()) {
-            echo 'Valid';
-        }
-
-        if ($form->isSubmitted()) {
-            $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->persist($recipeTotal);
-            $entityManager->flush();
-        }
-
-
-        $id = $recipeTotal->getId();
         $nameIngredients = [];
-        $recipeOnly = $recipeTotalRepository->find($id);
-        $recipes = $recipeOnly->getRecipe();
-        var_dump($recipes);
-        foreach ($recipes as $recipe) {
-            $titleRecipe = $recipe->getTitle();
-            $subTitleRecipe = $recipe->getSubTitle();
-        }
-        $ingredients = $recipeOnly->getIngredient();
+        $ingredients = $recipe->getIngredient();
         foreach ($ingredients as $ingredient) {
             $nameIngredients[] = $ingredient->getName();
         }
-//        return $this->json(["Id" => $recipes, "Title Recipe" => $titleRecipe, "SubTitle Recipe" => $subTitleRecipe, "ingredients" => $nameIngredients]);
 
+        return $this->json(['id' => $id, 'Title' => $title, 'SubTitle' => $subTitle, "Ingredients" => $nameIngredients]);
     }
+
+//    /**
+//     * Add Recipe Total
+//     * @Route("/recipetotal/add", name="RecipeTotalAdd", methods={"PUT"})
+//     * @param Request $request
+//     * @return JsonResponse|RedirectResponse
+//     */
+//    public function RecipeTotalAdd(Request $request, IngredientRepository $ingredientRepository)
+//    {
+//        $recipeTotal = new RecipeTotal();
+//
+//        $datas = json_decode($request->getContent(), true);
+//
+//        $errors = [];
+//        $ingredientRecipeTotal = [];
+//
+//
+//        foreach ($datas as $typeEntity => $data) {
+//            if ($typeEntity === 'Ingredient') {
+//                $ingredientTabs = $datas[$typeEntity];
+//                foreach ($ingredientTabs as $ingredients) {
+//                    foreach ($ingredients as $keyIngredient => $ingredient) {
+//
+//                        if ($keyIngredient === 'id') {
+//                            $ingredientRecipeTotal[] = $ingredientRepository->find($ingredient);
+//                            var_dump($ingredientRecipeTotal);
+//                        } elseif ($keyIngredient === 'name') {
+//                            if ($ingredientRepository->findOneByName($ingredient)) {
+//                                $ingredientRecipeTotal[] = $ingredientRepository->findOneByName($ingredient);
+//                            } else {
+//                                $curl = curl_init();
+//
+//                                curl_setopt_array($curl, array(
+//                                    CURLOPT_URL => "http://127.0.0.1:8000/api/ingredients/add",
+//                                    CURLOPT_RETURNTRANSFER => true,
+//                                    CURLOPT_ENCODING => "",
+//                                    CURLOPT_MAXREDIRS => 10,
+//                                    CURLOPT_TIMEOUT => 0,
+//                                    CURLOPT_FOLLOWLOCATION => true,
+//                                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+//                                    CURLOPT_CUSTOMREQUEST => "PUT",
+//                                    CURLOPT_POSTFIELDS => json_encode($ingredients[$keyIngredient], true),
+//                                    CURLOPT_HTTPHEADER => array(
+//                                        "Content-Type: application/json"
+//                                    ),
+//                                ));
+//                                $response = curl_exec($curl);
+//                                curl_close($curl);
+//                                $ingredientRecipeTotals[] = $response;
+//                            }
+//                        } else {
+//                            $errors[] = "Mauvais format d'ingrédient";
+//                        }
+//                    }
+//                }
+//                var_dump($ingredientRecipeTotals);
+//
+//            } elseif
+//            ($typeEntity === 'Recipe') {
+//                $recipes = $datas[$typeEntity];
+//            }
+//        }
+//
+//
+//        $form = $this->createForm(RecipeTotalType::class, $recipeTotal);
+//        $form->submit($data);
+//
+//        if ($form->isSubmitted()) {
+//            echo 'Submit';
+//        }
+//
+//        if ($form->isValid()) {
+//            echo 'Valid';
+//        }
+//
+//        if ($form->isSubmitted()) {
+//            $entityManager = $this->getDoctrine()->getManager();
+//            $entityManager->persist($recipeTotal);
+//            $entityManager->flush();
+//        }
+//
+//
+//        $id = $recipeTotal->getId();
+//        $nameIngredients = [];
+//        $recipeOnly = $recipeTotalRepository->find($id);
+//        $recipes = $recipeOnly->getRecipe();
+//        var_dump($recipes);
+//        foreach ($recipes as $recipe) {
+//            $titleRecipe = $recipe->getTitle();
+//            $subTitleRecipe = $recipe->getSubTitle();
+//        }
+//        $ingredients = $recipeOnly->getIngredient();
+//        foreach ($ingredients as $ingredient) {
+//            $nameIngredients[] = $ingredient->getName();
+//        }
+////        return $this->json(["Id" => $recipes, "Title Recipe" => $titleRecipe, "SubTitle Recipe" => $subTitleRecipe, "ingredients" => $nameIngredients]);
+//
+//    }
 
 
     /**
      * Show Recipe Total
      * @Route("/ingredients/{id}", name="IngredientShow", methods={"GET"})
-     * @param RecipeTotal $recipeTotal
-     * @param RecipeTotalRepository $recipeTotalRepository
      * @param int $id
      * @return JsonResponse
      */
@@ -225,29 +232,29 @@ class BlogApiController extends AbstractController
 //        return $this->json(["Title Recipe" => $titleRecipe, "SubTitle Recipe" => $subTitleRecipe, "ingredients" => $nameIngredients] );
 //    }
 
-    /**
-     * Show Recipe Total
-     * @Route("/recipetotal/{id}", name="RecipeTotalShow", methods={"GET"})
-     * @param RecipeTotal $recipeTotal
-     * @param RecipeTotalRepository $recipeTotalRepository
-     * @param int $id
-     * @return JsonResponse
-     */
-    public function RecipeShow(RecipeTotal $recipeTotal, RecipeTotalRepository $recipeTotalRepository, int $id)
-    {
-        $nameIngredients = [];
-        $recipeOnly = $recipeTotalRepository->find($id);
-        $recipes = $recipeOnly->getRecipe();
-        foreach ($recipes as $recipe) {
-            $titleRecipe = $recipe->getTitle();
-            $subTitleRecipe = $recipe->getSubTitle();
-        }
-        $ingredients = $recipeOnly->getIngredient();
-        foreach ($ingredients as $ingredient) {
-            $nameIngredients[] = $ingredient->getName();
-        }
-        return $this->json(["Title Recipe" => $titleRecipe, "SubTitle Recipe" => $subTitleRecipe, "ingredients" => $nameIngredients]);
-    }
+//    /**
+//     * Show Recipe Total
+//     * @Route("/recipetotal/{id}", name="RecipeTotalShow", methods={"GET"})
+//     * @param RecipeTotal $recipeTotal
+//     * @param RecipeTotalRepository $recipeTotalRepository
+//     * @param int $id
+//     * @return JsonResponse
+//     */
+//    public function RecipeShow(RecipeTotal $recipeTotal, RecipeTotalRepository $recipeTotalRepository, int $id)
+//    {
+//        $nameIngredients = [];
+//        $recipeOnly = $recipeTotalRepository->find($id);
+//        $recipes = $recipeOnly->getRecipe();
+//        foreach ($recipes as $recipe) {
+//            $titleRecipe = $recipe->getTitle();
+//            $subTitleRecipe = $recipe->getSubTitle();
+//        }
+//        $ingredients = $recipeOnly->getIngredient();
+//        foreach ($ingredients as $ingredient) {
+//            $nameIngredients[] = $ingredient->getName();
+//        }
+//        return $this->json(["Title Recipe" => $titleRecipe, "SubTitle Recipe" => $subTitleRecipe, "ingredients" => $nameIngredients]);
+//    }
 
     private function remove_accents($string)
     {

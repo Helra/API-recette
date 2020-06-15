@@ -44,7 +44,7 @@ class IngredientRepository extends ServiceEntityRepository
             ->getQuery()
         ;
 
-        return $query->getResult();
+        return $query->getOneOrNullResult();
     }
 
 }

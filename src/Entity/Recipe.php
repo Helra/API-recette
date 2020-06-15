@@ -30,13 +30,13 @@ class Recipe
     private $SubTitle;
 
     /**
-     * @ORM\ManyToMany(targetEntity=RecipeTotal::class, mappedBy="Recipe")
+     * @ORM\ManyToMany(targetEntity=Ingredient::class, inversedBy="recipes", cascade={"persist", "remove"})
      */
-    private $recipeTotals;
+    private $Ingredient;
 
     public function __construct()
     {
-        $this->recipeTotals = new ArrayCollection();
+        $this->Ingredient = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -69,28 +69,26 @@ class Recipe
     }
 
     /**
-     * @return Collection|RecipeTotal[]
+     * @return Collection|Ingredient[]
      */
-    public function getRecipeTotals(): Collection
+    public function getIngredient(): Collection
     {
-        return $this->recipeTotals;
+        return $this->Ingredient;
     }
 
-    public function addRecipeTotal(RecipeTotal $recipeTotal): self
+    public function addIngredient(Ingredient $ingredient): self
     {
-        if (!$this->recipeTotals->contains($recipeTotal)) {
-            $this->recipeTotals[] = $recipeTotal;
-            $recipeTotal->addRecipe($this);
+        if (!$this->Ingredient->contains($ingredient)) {
+            $this->Ingredient[] = $ingredient;
         }
 
         return $this;
     }
 
-    public function removeRecipeTotal(RecipeTotal $recipeTotal): self
+    public function removeIngredient(Ingredient $ingredient): self
     {
-        if ($this->recipeTotals->contains($recipeTotal)) {
-            $this->recipeTotals->removeElement($recipeTotal);
-            $recipeTotal->removeRecipe($this);
+        if ($this->Ingredient->contains($ingredient)) {
+            $this->Ingredient->removeElement($ingredient);
         }
 
         return $this;

@@ -25,13 +25,13 @@ class Ingredient
     private $name;
 
     /**
-     * @ORM\ManyToMany(targetEntity=RecipeTotal::class, mappedBy="Ingredient")
+     * @ORM\ManyToMany(targetEntity=Recipe::class, mappedBy="Ingredient", cascade={"persist", "remove"})
      */
-    private $recipeTotals;
+    private $recipes;
 
     public function __construct()
     {
-        $this->recipeTotals = new ArrayCollection();
+        $this->recipes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -51,29 +51,31 @@ class Ingredient
         return $this;
     }
 
+
+
     /**
-     * @return Collection|RecipeTotal[]
+     * @return Collection|Recipe[]
      */
-    public function getRecipeTotals(): Collection
+    public function getRecipes(): Collection
     {
-        return $this->recipeTotals;
+        return $this->recipes;
     }
 
-    public function addRecipeTotal(RecipeTotal $recipeTotal): self
+    public function addRecipe(Recipe $recipe): self
     {
-        if (!$this->recipeTotals->contains($recipeTotal)) {
-            $this->recipeTotals[] = $recipeTotal;
-            $recipeTotal->addIngredient($this);
+        if (!$this->recipes->contains($recipe)) {
+            $this->recipes[] = $recipe;
+            $recipe->addIngredient($this);
         }
 
         return $this;
     }
 
-    public function removeRecipeTotal(RecipeTotal $recipeTotal): self
+    public function removeRecipe(Recipe $recipe): self
     {
-        if ($this->recipeTotals->contains($recipeTotal)) {
-            $this->recipeTotals->removeElement($recipeTotal);
-            $recipeTotal->removeIngredient($this);
+        if ($this->recipes->contains($recipe)) {
+            $this->recipes->removeElement($recipe);
+            $recipe->removeIngredient($this);
         }
 
         return $this;
