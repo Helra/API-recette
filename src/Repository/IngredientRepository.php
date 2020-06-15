@@ -36,15 +36,15 @@ class IngredientRepository extends ServiceEntityRepository
     }
     */
 
-    /*
-    public function findOneBySomeField($value): ?Ingredient
+    public function findOneByName($value): ?Ingredient
     {
-        return $this->createQueryBuilder('i')
-            ->andWhere('i.exampleField = :val')
+        $query = $this->createQueryBuilder('i')
+            ->where('i.name LIKE :val')
             ->setParameter('val', $value)
             ->getQuery()
-            ->getOneOrNullResult()
         ;
+
+        return $query->getResult();
     }
-    */
+
 }
