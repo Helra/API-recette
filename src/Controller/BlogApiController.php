@@ -114,17 +114,19 @@ class BlogApiController extends AbstractController
         foreach ($recipes as $recipe) {
             $nameRecipes[] = $recipe->getTitle();
         }
+        $id = $ingredient->getId();
         $ingredientName = $ingredient->getName();
-        return $this->json(["name" => $ingredientName, "Recipes" => $nameRecipes]);
+        return $this->json(["id" => $id, "name" => $ingredientName, "Recipes" => $nameRecipes]);
     }
 
     /**
      * Show Recipe
      * @Route("/recipes/{id}", name="RecipeShow", methods={"GET"})
+     * @param RecipeRepository $recipeRepository
      * @param int $id
      * @return JsonResponse
      */
-    public function RecipeShow(Recipe $recipe, RecipeRepository $recipeRepository, int $id)
+    public function RecipeShow( RecipeRepository $recipeRepository, int $id)
     {
         $nameIngredients = [];
         $recipe = $recipeRepository->find($id);
