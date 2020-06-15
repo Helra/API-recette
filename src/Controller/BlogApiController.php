@@ -102,46 +102,40 @@ class BlogApiController extends AbstractController
     /**
      * Show Ingredient
      * @Route("/ingredients/{id}", name="IngredientShow", methods={"GET"})
+     * @param IngredientRepository $ingredientRepository
      * @param int $id
      * @return JsonResponse
      */
-    public function IngredientShow (Ingredient $ingredient, IngredientRepository $ingredientRepository, int $id) {
-        $nameIngredients = [];
-        $recipeOnly = $ingredientRepository->find($id);
-        $recipes = $recipeOnly->getRecipe();
+    public function IngredientShow(IngredientRepository $ingredientRepository, int $id)
+    {
+        $nameRecipes = [];
+        $ingredient = $ingredientRepository->find($id);
+        $recipes = $ingredient->getRecipes();
         foreach ($recipes as $recipe) {
-            $titleRecipe = $recipe->getTitle();
-            $subTitleRecipe = $recipe->getSubTitle();
+            $nameRecipes[] = $recipe->getTitle();
         }
-        $ingredients = $recipeOnly->getIngredient();
+        $ingredientName = $ingredient->getName();
+        return $this->json(["name" => $ingredientName, "Recipes" => $nameRecipes]);
+    }
+
+    /**
+     * Show Recipe
+     * @Route("/recipes/{id}", name="RecipeShow", methods={"GET"})
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function RecipeShow(Recipe $recipe, RecipeRepository $recipeRepository, int $id)
+    {
+        $nameIngredients = [];
+        $recipe = $recipeRepository->find($id);
+        $titleRecipe = $recipe->getTitle();
+        $subTitleRecipe = $recipe->getSubTitle();
+        $ingredients = $recipe->getIngredient();
+        $id = $recipe->getId();
         foreach ($ingredients as $ingredient) {
             $nameIngredients[] = $ingredient->getName();
         }
-        return $this->json(["Title Recipe" => $titleRecipe, "SubTitle Recipe" => $subTitleRecipe, "ingredients" => $nameIngredients] );
+        return $this->json(["id" => $id, "Title Recipe" => $titleRecipe, "SubTitle Recipe" => $subTitleRecipe, "ingredients" => $nameIngredients]);
     }
-
-//    /**
-//     * Show Recipe Total
-//     * @Route("/recipetotal/{id}", name="RecipeTotalShow", methods={"GET"})
-//     * @param RecipeTotal $recipeTotal
-//     * @param RecipeTotalRepository $recipeTotalRepository
-//     * @param int $id
-//     * @return JsonResponse
-//     */
-//    public function RecipeShow(RecipeTotal $recipeTotal, RecipeTotalRepository $recipeTotalRepository, int $id)
-//    {
-//        $nameIngredients = [];
-//        $recipeOnly = $recipeTotalRepository->find($id);
-//        $recipes = $recipeOnly->getRecipe();
-//        foreach ($recipes as $recipe) {
-//            $titleRecipe = $recipe->getTitle();
-//            $subTitleRecipe = $recipe->getSubTitle();
-//        }
-//        $ingredients = $recipeOnly->getIngredient();
-//        foreach ($ingredients as $ingredient) {
-//            $nameIngredients[] = $ingredient->getName();
-//        }
-//        return $this->json(["Title Recipe" => $titleRecipe, "SubTitle Recipe" => $subTitleRecipe, "ingredients" => $nameIngredients]);
-//    }
 
 }
